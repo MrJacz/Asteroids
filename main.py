@@ -1,53 +1,53 @@
 import pygame
-from asteroid import Asteroid
+import sys
 from constants import *
-from player import *
-from asteroidfield import *
-from sys import exit
+from asteroid import Asteroid
+from player import Player
+from asteroidfield import AsteroidField
+from shot import Shot
 
 def main():
     pygame.init()
 
-    clock = pygame.time.Clock()
-    dt = 0
-
-    print("Starting Asteroids!")
-    print(f"Screen width: {SCREEN_WIDTH}")
-    print(f"Screen height: {SCREEN_HEIGHT}")
 
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    clock = pygame.time.Clock()
 
-    # pygame stuff
-    updatable = pygame.sprite.Group()
-    drawable = pygame.sprite.Group()
-    asteroids = pygame.sprite.Group()
+    updatable, drawable, asteroids, shots = pygame.sprite.Group(), pygame.sprite.Group(), pygame.sprite.Group(), pygame.sprite.Group()
 
-    AsteroidField.containers = (updatable)
+    AsteroidField.containers = updatable
     Asteroid.containers = (asteroids, updatable, drawable)
     Player.containers = (updatable, drawable)
+    Shot.containers = (updatable, drawable, shots)
 
-    af = AsteroidField()
+    asteroid_field = AsteroidField()
     player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+
+    dt = 0
 
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return
 
-        screen.fill("black")
-
         updatable.update(dt)
 
-        for d in drawable:
-            d.draw(screen)
-
-        pygame.display.update()
-
-        for ent in asteroids:
-            if not ent.check_collision(player):
+        for asteroid in asteroids:
+            if asteroid.check_collision(player):
                 print("Game over!")
-                exit()
+                sys.exit()
 
+            for shot in shots:
+                if asteroid.check_collision(shot):
+                    asteroid.split()
+                    shot.kill()
+
+        screen.fill("black")
+
+        for obj in drawable:
+            obj.draw(screen)
+
+        pygame.display.flip()
 
         dt = clock.tick(SCREEN_FPS) / 1000
 
